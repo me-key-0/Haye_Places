@@ -3,23 +3,21 @@ const jwt = require("jsonwebtoken");
 
 const validateToken = asyncHandler(async (req, res, next) => {
   let token;
-  console.log("middleware");
   let authHeader = req.headers.Authorization || req.headers.authorization;
   if (authHeader && authHeader.startsWith("Bearer")) {
-    console.log("Bearer exists");
     token = authHeader.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
       if (err) {
         res.status(401);
-        console.log(err);
+        console.error(err);
+        return next(err);
       } else {
         console.log(decoded);
+        req.user = decoded.user;
+        next();
       }
     });
-
-    req.user = decoded.user;
   }
-  next();
 
   if (!token) {
     res.status(401);
