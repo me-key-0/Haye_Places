@@ -3,14 +3,6 @@ const User = require("../models/usersModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const trial = async (req, res) => {
-  try {
-    res.json({ info: "some info" });
-  } catch (error) {
-    res.status(500).json({ error: "m Server error" });
-  }
-};
-
 // GET /users
 const getAllUsers = asyncHandler(async (req, res) => {
   try {
@@ -40,11 +32,14 @@ const getUserById = async (req, res) => {
 // POST /users
 const createUser = asyncHandler(async (req, res) => {
   const { username, email, password, city } = req.body;
+  console.log("cu");
 
   //Check for empty fields and throw an error
   if (!username || !email || !password || !city) {
-    res.status(400);
-    throw new Error("All fields are mandatory");
+    res.status(400).json({
+      message: "All fields are mandatory",
+    });
+    // throw new Error("All fields are mandatory");
   }
   try {
     //Check if user already registered, and throw an error
@@ -52,11 +47,13 @@ const createUser = asyncHandler(async (req, res) => {
       email,
     });
     if (userAvailable) {
-      res.status(400);
-      throw new Error("User already exist");
+      res.status(400).json({
+        message: "User already exist",
+      });
     }
 
     //Hash password
+
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log(hashedPassword);
 
@@ -70,12 +67,15 @@ const createUser = asyncHandler(async (req, res) => {
 
     if (user) {
       res.status(201).json({
+        message: "User registered Successfully",
         id: user._id,
         email: user.email,
       });
     } else {
-      res.status(400);
-      throw new Error("User data is not valid");
+      res.status(400).json({
+        message: "User data is not valid",
+      });
+      // throw new Error("User data is not valid")
     }
 
     // console.log(hashedPassword);
@@ -86,15 +86,10 @@ const createUser = asyncHandler(async (req, res) => {
 
 // PUT /users/:id
 const updateUser = async (req, res) => {
-  const userId = req.params.id;
-  const { username, email, password, city } = req.body;
+  const { _id } = res.locals.user;
 
   try {
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { username, email, password, city },
-      { new: true }
-    );
+    const user = await User.findByIdAndUpdate(_id, req.body, { new: true });
     if (user) {
       res.json(user);
     } else {
@@ -107,12 +102,14 @@ const updateUser = async (req, res) => {
 
 // DELETE /users/:id
 const deleteUser = async (req, res) => {
-  const userId = req.params.id;
+  const { _id } = res.locals.user;
 
   try {
-    const user = await User.findByIdAndDelete(userId);
+    const user = await User.findByIdAndDelete(_id);
     if (user) {
-      res.json(user);
+      res.json({
+        message: "User Deleted successfully!",
+      });
     } else {
       res.status(404).json({ error: "User not found" });
     }
@@ -122,13 +119,12 @@ const deleteUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  //CHeck for empty fields
+  //Check for empty fields
   const { username, password } = req.body;
   if (!username || !password) {
     res.status(201);
     throw new Error("All fields are mandatory");
   }
-  console.log("username and password checked");
 
   try {
     //Check if the user exist
@@ -136,10 +132,9 @@ const loginUser = async (req, res) => {
       username,
     });
 
+    // compare password with the one in the db(hashed one)
     if (user && (await bcrypt.compare(password, user.password))) {
-      // compare password with the one in the db(hashed one)
-      console.log(user);
-      console.log("password match");
+      // Acces token generation
       const accessToken = jwt.sign(
         {
           user: {
@@ -150,12 +145,37 @@ const loginUser = async (req, res) => {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-          expiresIn: "15m",
+          expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
         }
       );
-      console.log("access token defined");
+
+      // Refresh token generation
+      const refreshToken = jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+      );
+
+      // Sending access token to browser Cookie
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        maxAge: 25 * 60 * 1000,
+        sameSite: "strict",
+      });
+
+      // Sending refresh token to browser Cookie
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: 15 * 24 * 60 * 60 * 1000,
+        sameSite: "strict",
+      });
+
       res.status(200).json({
         accessToken,
+        refreshToken,
       });
     } else {
       res.status(401);
@@ -168,9 +188,61 @@ const loginUser = async (req, res) => {
   }
 };
 
+const logoutUser = (req, res) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+  res.status(200).json({
+    message: "Logged out succesfully",
+  });
+};
+
+const updatePassword = async (req, res) => {
+  const { _id } = res.locals.user;
+  const { password } = req.body;
+  console.log(password);
+  try {
+    const hashedP = await bcrypt.hash(password, 10);
+    console.log(hashedP);
+    const user = await User.findByIdAndUpdate(_id, { password: hashedP });
+    res.json({
+      message: "it works",
+      user: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "server error",
+    });
+  }
+};
+
+const isUser = async (req, res, next) => {
+  // console.log(res.locals.user);
+  const user = await User.findOne({
+    username: req.body.username,
+  });
+  console.log(req.body);
+  if (user && user.role === "user") {
+    next();
+  } else {
+    return res.status(403).json({
+      message: "Not a user",
+    });
+  }
+};
+
+const isAdmin = (req, res, next) => {
+  console.log(res.locals.user);
+  if (res.locals.user.role === "admin") {
+    next();
+  } else {
+    return res.status(403).json({
+      message: "Not an Admin",
+    });
+  }
+};
+
 const currentUser = async (req, res) => {
-  console.log("current info");
-  res.json({ info: "info" });
+  res.json(res.locals.user);
 };
 
 module.exports = {
@@ -180,6 +252,9 @@ module.exports = {
   updateUser,
   deleteUser,
   loginUser,
+  logoutUser,
   currentUser,
-  trial,
+  updatePassword,
+  isUser,
+  isAdmin,
 };
