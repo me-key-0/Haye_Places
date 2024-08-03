@@ -7,7 +7,7 @@ const getAllPlaces = asyncHandler(async (req, res) => {
     const places = await Place.find();
     res.json(places);
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "g Server error" });
   }
 });
 

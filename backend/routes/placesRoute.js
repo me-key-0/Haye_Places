@@ -1,10 +1,17 @@
 const express = require("express");
 const router = express.Router();
+const {
+  getAllPlaces,
+  getPlacesById,
+  createPlace,
+  updatePlace,
+  deletePlace,
+} = require("../controllers/placeController");
 
 // desc @get All places
 // route @GET /places
 // access-level @user, superAdmin
-router.route("/").get();
+router.route("/").get(getAllPlaces);
 
 // desc @create places
 // route @POST /places

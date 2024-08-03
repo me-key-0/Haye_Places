@@ -1,5 +1,5 @@
 const express = require("express");
-const validateToken = require("../middleware/validateTokenHandler");
+const validateToken = require("../middleware/validateToken");
 
 const router = express.Router();
 const {
@@ -9,24 +9,49 @@ const {
   updateUser,
   deleteUser,
   loginUser,
+  logoutUser,
+  refreshController,
   currentUser,
+  updatePassword,
+  forgetPassword,
+  resetPassword,
+  resendPasswordEmail,
+  verifyEmail,
+  isUser,
+  isAdmin,
 } = require("../controllers/userController");
+
+router.route("/userhome").get(validateToken, isUser, currentUser);
 
 // desc @create/register Users
 // route @POST /users
 // access-level @user, superadmin
-router.route("/register").post(createUser);
+router.route("/register").post(verifyEmail);
+router.route("/register-verified").post(createUser);
 
 // desc @login a User
 // route @POST /users/login
 // access-level @user, superAdmin
-router.route("/login").post(loginUser);
+router.route("/login").post(isUser, loginUser);
+
+// desc @login a User
+// route @POST /users/login
+// access-level @user, superAdmin
+router.route("/logout").post(logoutUser);
+
+router.route("/refresh").post(refreshController);
 
 // desc @current User info
 // route @GET /users/current
 // access-level @user, superAdmin
-router.route("/current").get(currentUser);
-// router.get("/current", validateToken, currentUser);
+router.route("/current").get(validateToken, currentUser);
+
+router.route("/password/:id").put(validateToken, updatePassword);
+
+router.route("/forget-password").post(forgetPassword);
+router.route("/forget-password/resend").post(resendPasswordEmail);
+
+router.route("/reset-password").post(resetPassword);
 
 // desc @get a User
 // route @GET /users/:id
@@ -34,18 +59,18 @@ router.route("/current").get(currentUser);
 router.route("/:id").get(getUserById);
 
 // desc @update a User
-// route @PUT /users/:id
+// route @PUT /users/
 // access-level @user, superAdmin
-router.route("/:id").put(updateUser);
+router.route("/").put(validateToken, updateUser);
 
 // desc @delete a User
-// route @DELETE /users/:id
+// route @DELETE /users/
 // access-level @user, superAdmin
-router.route("/:id").delete(deleteUser);
+router.route("/").delete(validateToken, deleteUser);
 
 // desc @get All Users
 // route @GET /users
 // access-level @superAdmin
 router.route("/").get(getAllUsers);
 
-module.exports = router;
+const link = (module.exports = router);

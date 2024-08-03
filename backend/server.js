@@ -1,9 +1,11 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const { usersRoute } = require("./routes/usersRoute");
 require("dotenv").config();
 
 const app = express();
 const connectDb = require("./config/db");
+app.use(cookieParser());
 
 const port = process.env.PORT || 5000;
 
