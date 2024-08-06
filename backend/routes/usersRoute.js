@@ -15,7 +15,7 @@ const {
   updatePassword,
   forgetPassword,
   resetPassword,
-  resendPasswordEmail,
+  // resendPasswordEmail,
   verifyEmail,
   isUser,
   isAdmin,
@@ -27,7 +27,7 @@ router.route("/userhome").get(validateToken, isUser, currentUser);
 // route @POST /users
 // access-level @user, superadmin
 router.route("/register").post(verifyEmail);
-router.route("/register-verified").post(createUser);
+router.route("/register-verified/:token").post(createUser);
 
 // desc @login a User
 // route @POST /users/login
@@ -37,7 +37,7 @@ router.route("/login").post(isUser, loginUser);
 // desc @login a User
 // route @POST /users/login
 // access-level @user, superAdmin
-router.route("/logout").post(logoutUser);
+router.route("/logout").post(validateToken, logoutUser);
 
 router.route("/refresh").post(refreshController);
 
@@ -49,7 +49,7 @@ router.route("/current").get(validateToken, currentUser);
 router.route("/password/:id").put(validateToken, updatePassword);
 
 router.route("/forget-password").post(forgetPassword);
-router.route("/forget-password/resend").post(resendPasswordEmail);
+// router.route("/forget-password/resend").post(resendPasswordEmail);
 
 router.route("/reset-password").post(resetPassword);
 
