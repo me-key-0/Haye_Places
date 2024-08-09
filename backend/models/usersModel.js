@@ -30,13 +30,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  emailVerified: {
-    type: Boolean,
-    default: false,
-  },
+  // emailVerified: {
+  //   type: Boolean,
+  //   default: false,
+  // },
   pwdToken: {
     type: String,
     required: false,
+  },
+  refToken: {
+    type: String,
   },
 });
 
