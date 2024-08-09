@@ -1,8 +1,11 @@
-const { URLSearchParams } = require("url");
 const User = require("../models/usersModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const {
+  userRegistrationSchema,
+  loginSchema,
+} = require("../validation/validate");
 
 // GET /users
 const getAllUsers = async (req, res) => {
@@ -115,11 +118,17 @@ const deleteUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  //Check for empty fields
   const { username, password } = req.body;
-  if (!username || !password) {
-    res.status(400).json({
-      error: "all fields are mandatory!",
+
+  const { error } = loginSchema.validate({
+    username,
+    password,
+  });
+
+  if (error) {
+    return res.status(400).json({
+      message: "Validation failed",
+      details: error.details[0].message,
     });
   }
 
@@ -413,12 +422,17 @@ const resetPassword = async (req, res) => {
 const verifyEmail = async (req, res) => {
   const { username, password, email, city } = req.body;
 
-  //Check for empty fields and throw an error
-  if (!username || !email || !password || !city) {
+  const { error } = userRegistrationSchema.validate({
+    username,
+    password,
+    email,
+    city,
+  });
+  if (error) {
     return res.status(400).json({
-      message: "All fields are mandatory",
+      message: "Validation failed",
+      details: error.details[0].message,
     });
-    // throw new Error("All fields are mandatory");
   }
 
   try {
@@ -465,7 +479,7 @@ const verifyEmail = async (req, res) => {
         from: process.env.SMTP_USERNAME, // sender address
         to: email, // receiver address
         subject: "Verify Email ✔", // Subject line
-        text: "Email Verification?", // plain text body
+        text: `Email Verification?`, // plain text body
         html: `<button><b><a href="${registrationLink}">Verify-Email<a/></b></button>
         <p>${registrationLink}</p>`, // html body
       },
@@ -490,57 +504,6 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-// const resendPasswordEmail = async (req, res) => {
-//   const { email } = req.body;
-//   const user = await User.findOne({ email });
-
-//   if (!user) {
-//     res.status(404).json({
-//       message: "user not found",
-//     });
-//   }
-
-//   const token = jwt.sign(
-//     {
-//       id: user._id,
-//     },
-//     process.env.PASSWORD_RETRIEVAL_TOKEN,
-//     {
-//       expiresIn: process.env.PASSWORD_RETRIEVAL_EXPIRY,
-//     }
-//   );
-
-//   const resetLink = `https://${process.env.HOST}:${process.env.PORT}/resetPassword?token=${token}`;
-
-//   const transporter = nodemailer.createTransport({
-//     host: "smtp.ethereal.email",
-//     port: 587,
-//     auth: {
-//       user: "antwon.mills82@ethereal.email",
-//       pass: "NvyZzynEAAwJA4JvF4",
-//     },
-//   });
-
-//   // Send the password reset link to the user's email
-//   try {
-//     await transporter.sendMail({
-//       from: '"Antwon Mills" <antwon.mills82@ethereal.email>',
-//       to: email,
-//       subject: "Password Reset Request",
-//       text: `Click the link to reset your password: ${resetLink}`,
-//       html: `<p>Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
-//     });
-
-//     console.log(`before : ${user.pwdToken}`);
-//     user.pwdToken = token;
-//     await user.save();
-//     console.log(`after : ${user.pwdToken}`);
-
-//     res.status(200).json({ message: "Password reset link sent to your email" });
-//   } catch (error) {
-//     res.status(500).json({ message: "Error sending email", error });
-//   }
-// };
 module.exports = {
   getAllUsers,
   getUserById,
