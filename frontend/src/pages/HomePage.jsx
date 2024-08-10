@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 const HomePage = () => {
   return (
     <div className="bg-white font-sans">
+<<<<<<< HEAD:src/pages/HomePage.jsx
+      
+=======
       {/* Header with Logo and Sign-In Button */}
       <header className="bg-[#FCF8F1] shadow-md fixed top-0 left-0 w-full z-50 flex items-center justify-between h-16 lg:h-20 px-4 sm:px-6 lg:px-8">
         <Link to="/">
@@ -45,8 +48,9 @@ const HomePage = () => {
           Sign In
         </Link>
       </header>
+>>>>>>> aca4a436650851a8888c514d9c01a03121609228:frontend/src/pages/HomePage.jsx
 
-      {/* Main Content */}
+{/* Main Content */}
       <div className="pt-20 mt-16">
         <section id="explore" className="py-10 sm:py-16 lg:py-24">
           <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">

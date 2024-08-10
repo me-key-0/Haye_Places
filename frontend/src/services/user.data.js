@@ -1,9 +1,11 @@
 const user = [
     {
       id: "1",
-      name: "John Doe",
+      displayName: "John Doe",
       email: "john.doe@example.com",
       favorites: ["1", "3"],
+      isSignedIn: true,
+      password: "",
       reviews: [
         {
           placeId: "1",
@@ -14,9 +16,11 @@ const user = [
     },
     {
       id: "2",
-      name: "Jane Smith",
+      displayName: "Jane Smith",
       email: "jane.smith@example.com",
       favorites: ["2"],
+      isSignedIn: false,
+      password: "",
       reviews: [
         {
           placeId: "2",
